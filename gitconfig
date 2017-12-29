@@ -1,0 +1,5 @@
+[user]
+	email = dustin@binarystar.ca
+	name = Dustin Sparks
+[core]
+	excludefile = ~/.gitignore_global
