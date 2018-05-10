@@ -1,32 +1,65 @@
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+# History settings
 shopt -s histappend
 export HISTCONTROL=erasedups
 export HISTSIZE=10000
 
-export PATH=~/bin:~/bin/baseline/bin:/usr/local/git/bin:/Applications/VMware\ Fusion.app/Contents/Library/:~/bin/apache-ant-1.9.4/bin:$PATH
-export VAGRANT_VMWARE_CLONE_DIRECTORY=/Users/dustins/Documents/Projects/.vagrant_vmware_vms
-export VAGRANT_DEFAULT_PROVIDER=vmware_fusion
+export HISTFILESIZE=2000
 
-alias vim='mvim -v'
-export VISUAL='vim -f'
-export EDITOR='vim -f'
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
+
+# make less more friendly for non-text input files, see lesspipe(1)
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+# set a fancy prompt (non-color, unless we know we "want" color)
+case "$TERM" in
+    xterm-color|*-256color) color_prompt=yes;;
+esac
 
 
-alias d="cd ~/Documents"
-alias p="cd ~/Documents/Projects"
-alias ls="/bin/ls -a"
+
+#set up vi/vim
+if hash mvim 2>/dev/null; then
+        alias vim='mvim -v'
+fi
+if hash vim 2>/dev/null; then
+    export VISUAL='vim -f'
+    export EDITOR='vim -f'
+fi
+
+if [ -d "$HOME/Documents" ]; then
+    alias d="cd ~/Documents"
+fi
+if [ -d "$HOME/Documents/Projects" ]; then
+    alias p="cd ~/Documents/Projects"
+else
+    if [ -d "$HOME/Projects" ]; then
+        alias p="cd ~/Projects"
+    fi
+fi
+
+alias ls="/bin/ls -lah"
 
 alias gst='git status'
 alias gb='git branch'
 alias gca='git commit -v -a'
 #source git-completion.bash
 
-#alias vp='vim ~/dotfiles/bash_profile'
-#alias sp='source ~/.bash_profile'
+alias vp='vim ~/dotfiles/bash_profile'
+alias sp='source ~/.bash_profile'
 
 export HISTIGNORE="fg*"
 
+## Set up the command prompt to have git status
 function parse_git_dirty {
-  [[ $(git status 2> /dev/null | tail -n1) != "nothing to commit, working directory clean" ]] && echo "*"
+  [[ $(git status 2> /dev/null | tail -n1) != "nothing to commit, working tree clean" ]] && echo "*"
 }
 function parse_git_branch {
   git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \(.*\)/[\1$(parse_git_dirty)]/"
@@ -41,19 +74,33 @@ function proml {
   local       WHITE="\[\033[1;37m\]"
   local  LIGHT_GRAY="\[\033[0;37m\]"
   local  BLACK="\[\033[0;0m\]"
-  case $TERM in
-    xterm*)
-    TITLEBAR='\[\033]0;\u@\h:\w\007\]'
-    ;;
-    *)
-    TITLEBAR=""
-    ;;
-  esac
 
-# PS1="$GREEN\$(parse_git_branch)$BLACK\$ "
-PS1="$GREEN\$(parse_git_branch)$BLACK\$ "
-PS2='> '
-PS4='+ '
+ # PS1="$GREEN\$(parse_git_branch)$BLACK\$ "
+ PS1="\u@\h$GREEN \$(parse_git_branch)$BLACK\$ "
+ PS2='> '
+ PS4='+ '
+
+ case "$TERM" in
+ xterm*|rxvt*)
+     PS1="\[\e]0;\u@\h \$(parse_git_branch)\a\]$PS1"
+     ;;
+ *)
+     ;;
+ esac
+
+ # enable color support of ls and also add handy aliases
+ if [ -x /usr/bin/dircolors ]; then
+     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+     alias ls='ls --color=auto'
+     #alias dir='dir --color=auto'
+     #alias vdir='vdir --color=auto'
+
+     alias grep='grep --color=auto'
+     alias fgrep='fgrep --color=auto'
+     alias egrep='egrep --color=auto'
+ else
+     export CLICOLOR=1
+ fi
 }
 proml
 
@@ -103,28 +150,4 @@ if [[ "$TERM" == "xterm" || "$TERM" == "xterm-color" ]] ; then
  export PROMPT_COMMAND="directory_to_titlebar"
 fi
 
-eval "$(baseline autocomplete)"
-
-date
-export PATH=$PATH:/Users/dustins/bin/baseline/bin
-
-##
-# android dev
-##
-export ANDROID_HOME=/Users/dustins/bin/android-sdk-macosx
-export PATH=$PATH:$ANDROID_HOME/tools
-##
-# Your previous /Users/dustins/.bash_profile file was backed up as /Users/dustins/.bash_profile.macports-saved_2014-06-30_at_23:49:35
-##
-
-# MacPorts Installer addition on 2014-06-30_at_23:49:35: adding an appropriate PATH variable for use with MacPorts.
-export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
-# Finished adapting your PATH environment variable for use with MacPorts.
-
-
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
-
-# Setting PATH for Python 2.7
-# The orginal version is saved in .bash_profile.pysave
-PATH="/Library/Frameworks/Python.framework/Versions/2.7/bin:${PATH}"
-export PATH
+export PATH=/usr/local/bin:/usr/bin:/bin:/sbin:~/bin:$PATH
